@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#02000f"/>
+  <meta name="description" content="ManiFestinger — Manifest your dreams one reminder at a time"/>
+  <title>ManiFestinger</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>"/>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#02000f}</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+
+
+const INTENTIONS = [
+  "abundance & wealth","love & relationships","health & healing",
+  "career & success","inner peace","confidence","creativity",
+  "gratitude","protection","new beginnings",
+];
+
+const GRABOVOI_CODES = {
+  // YOUR CORE CODES
+  "good health":            { code:"80845700",        desc:"General health & personal wellbeing. Relief from fatigue and physical ailments." },
+  "inner peace":            { code:"1001105010",      desc:"Harmonizes mind, body and spirit into a state of deep calm." },
+  "money magnet":           { code:"318 612 518 714", desc:"Cash flow abundantly. Attracts financial abundance from all directions." },
+  "dream body":             { code:"5342168",         desc:"Supports weight loss and physical transformation manifestation." },
+  "cancel fear & negativity":{ code:"4748132148",    desc:"Cancels negativity, blocks negative patterns and creates protection." },
+  "pure love":              { code:"888 412 1289018", desc:"Manifests love in all relationships. Opens the heart to give and receive." },
+  // BONUS CODES
+  "unexpected money":       { code:"520 741 8",       desc:"Attracts surprise income, windfalls and unexpected financial blessings." },
+  "financial abundance":    { code:"318 798",         desc:"Builds steady, lasting financial abundance and prosperity." },
+  "self love":              { code:"396815",          desc:"Deepens self-worth, self-acceptance and unconditional love for yourself." },
+  "confidence":             { code:"517 489719 841",  desc:"Builds unshakeable self-confidence and personal power." },
+  "good luck":              { code:"817219738",       desc:"Activates good luck and fortunate outcomes across all areas of life." },
+  "dream career":           { code:"493151 864 1491", desc:"Manifests your ideal job, career success and professional recognition." },
+  "divine protection":      { code:"8888",            desc:"Creates a field of divine protection around you and your loved ones." },
+  "healing the body":       { code:"9187948181",      desc:"Activates deep cellular healing and full body restoration." },
+  "attract a partner":      { code:"197 023",         desc:"Opens the path to attracting your ideal romantic partner." },
+  "abundance":              { code:"71427321893",     desc:"Activates the universal frequency of abundance in all forms." },
+  "create miracles":        { code:"519 7148",        desc:"Opens the field for miracles and impossible things to become possible." },
+  "self esteem":            { code:"4818951749814",   desc:"Restores and strengthens healthy self-esteem from the inside out." },
+  "fame & recognition":     { code:"8277237",         desc:"Attracts public recognition, fame and visibility for your gifts." },
+  "pain relief":            { code:"55515",           desc:"Supports relief from physical pain and bodily discomfort." },
+};
+
+const PRESET_SOUNDS = [
+  { id:"rain",  label:"Gentle Rain",    emoji:"🌧️" },
+  { id:"waves", label:"Ocean Waves",    emoji:"🌊" },
+  { id:"fire",  label:"Crackling Fire", emoji:"🔥" },
+  { id:"birds", label:"Morning Birds",  emoji:"🐦" },
+  { id:"bowl",  label:"Singing Bowl",   emoji:"🔔" },
+  { id:"wind",  label:"Forest Wind",    emoji:"🍃" },
+];
+
+const STARS = Array.from({length:100},(_,i)=>({
+  id:i, x:Math.random()*100, y:Math.random()*100,
+  size:Math.random()*2.5+0.5, delay:Math.random()*4, dur:Math.random()*3+2,
+}));
+const DAYS_LIST = ["SU","MO","TU","WE","TH","FR","SA"];
+const DAY_SHORT  = ["S","M","T","W","T","F","S"];
+
+function playPreset(id, dur=8) {
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.0001, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0.4, ctx.currentTime+0.3);
+  master.connect(ctx.destination);
+  if (id==="bowl") {
+    [220,440,660].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0.3-i*0.08,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+dur);
+    });
+  } else if (["rain","wind","fire"].includes(id)) {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*(id==="fire"?1:0.2);
+    const src=ctx.createBufferSource();
+    const filt=ctx.createBiquadFilter();
+    filt.type=id==="fire"?"lowpass":"bandpass";
+    filt.frequency.value=id==="wind"?600:id==="rain"?800:300;
+    src.buffer=buf; src.connect(filt); filt.connect(master); src.start();
+  } else if (id==="waves") {
+    const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=80;
+    o.connect(master); o.start(); o.stop(ctx.currentTime+dur);
+  } else if (id==="birds") {
+    for(let i=0;i<8;i++) setTimeout(()=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      const f=800+Math.random()*600;
+      o.type="sine"; o.frequency.value=f;
+      o.frequency.linearRampToValueAtTime(f*1.3,ctx.currentTime+0.15);
+      g.gain.setValueAtTime(0.15,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.4);
+    }, i*800+Math.random()*400);
+  }
+  master.gain.setValueAtTime(0.4,ctx.currentTime+dur-0.5);
+  master.gain.linearRampToValueAtTime(0.0001,ctx.currentTime+dur);
+  return ctx;
+}
+
+function blankAlarm() {
+  return { id:Date.now(), label:"", time:"08:00", days:["MO","TU","WE","TH","FR"],
+    active:true, showVision:true, visionId:null, playSound:false,
+    anchorId:null, showAffirm:false, affirmIntention:null };
+}
+
+export default function ManiFestinger() {
+  const [tab, setTab] = useState(0);
+
+  // Affirmation
+  const [intention, setIntention]         = useState(null);
+  const [intentionOpen, setIntentionOpen] = useState(false);
+  const [affirmation, setAffirmation]     = useState("");
+  const [afLoading, setAfLoading]         = useState(false);
+  const [afRevealed, setAfRevealed]       = useState(false);
+
+  // Vision board
+  const [visions, setVisions]   = useState([]);
+  const [vLabel, setVLabel]     = useState("");
+  const [vUrl, setVUrl]         = useState("");
+  const [focusedV, setFocusedV] = useState(null);
+  const fileRef = useRef(null);
+
+  // Sound anchors
+  const [anchors, setAnchors]         = useState([]);
+  const [aName, setAName]             = useState("");
+  const [aMemory, setAMemory]         = useState("");
+  const [aPreset, setAPreset]         = useState(null);
+  const [aUpload, setAUpload]         = useState(null);
+  const [aUploadName, setAUploadName] = useState("");
+  const [aRecorded, setARecorded]     = useState(null);
+  const [recording, setRecording]     = useState(false);
+  const [soundTab, setSoundTab]       = useState(0);
+  const [playing, setPlaying]         = useState(null);
+  const audioRef     = useRef(null);
+  const mrRef        = useRef(null);
+  const audioFileRef = useRef(null);
+
+  // Alarms
+  const [alarms, setAlarms]   = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [firing, setFiring]   = useState(null);
+  const [firingAf, setFiringAf] = useState("");
+  const tickRef = useRef(null);
+
+  // Grabovoi
+  const [grabIntention, setGrabIntention]   = useState(null);
+  const [grabOpen, setGrabOpen]             = useState(false);
+  const [grabAffirm, setGrabAffirm]         = useState("");
+  const [grabAfLoading, setGrabAfLoading]   = useState(false);
+  const [customCodes, setCustomCodes]       = useState([]);
+  const [newCodeName, setNewCodeName]       = useState("");
+  const [newCodeNumber, setNewCodeNumber]   = useState("");
+  const [newCodeDesc, setNewCodeDesc]       = useState("");
+  const [showAddCode, setShowAddCode]       = useState(false);
+  // Meditation mode
+  const [medActive, setMedActive]           = useState(false);
+  const [medFullscreen, setMedFullscreen]   = useState(false);
+  const [medSound, setMedSound]             = useState("bowl");
+  const [medMinutes, setMedMinutes]         = useState(5);
+  const [medSecondsLeft, setMedSecondsLeft] = useState(null);
+  const [medRunning, setMedRunning]         = useState(false);
+  const [medPulse, setMedPulse]             = useState(false);
+  const medTimerRef = useRef(null);
+  const medCtxRef   = useRef(null);
+
+  // Progress tracking
+  const today = new Date().toISOString().split("T")[0];
+  const [medDays, setMedDays]         = useState({}); // { "2026-06-01": true }
+  const [afLog, setAfLog]             = useState([]); // saved affirmations
+  const [goals, setGoals]             = useState([]);
+  const [newGoalText, setNewGoalText] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState(10);
+  const [showGoalForm, setShowGoalForm]   = useState(false);
+
+  // Alarm tick
+  useEffect(()=>{
+    tickRef.current = setInterval(async ()=>{
+      const now  = new Date();
+      const hhmm = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+      const day  = DAYS_LIST[now.getDay()];
+      for (const alarm of alarms) {
+        if (!alarm.active||alarm.time!==hhmm||!alarm.days.includes(day)) continue;
+        fireAlarm(alarm);
+      }
+    }, 30000);
+    return ()=>clearInterval(tickRef.current);
+  }, [alarms, visions, anchors]);
+
+  async function fireAlarm(alarm) {
+    let vision = null;
+    if (alarm.showVision&&visions.length>0) {
+      vision = alarm.visionId ? visions.find(v=>v.id===alarm.visionId)||visions[0]
+        : visions[Math.floor(Math.random()*visions.length)];
+    }
+    if (alarm.playSound&&anchors.length>0) {
+      const anchor = alarm.anchorId ? anchors.find(a=>a.id===alarm.anchorId)
+        : anchors[Math.floor(Math.random()*anchors.length)];
+      if (anchor) playAnchor(anchor, true);
+    }
+    let afText = "";
+    if (alarm.showAffirm&&alarm.affirmIntention) {
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:300,
+            system:"Generate ONE short powerful affirmation (1-2 sentences + ALL CAPS mantra). Respond ONLY with the affirmation.",
+            messages:[{role:"user",content:`Affirmation for: ${alarm.affirmIntention}`}],
+          }),
+        });
+        const data = await res.json();
+        afText = data.content?.map(b=>b.text||"").join("").trim()||"";
+      } catch { afText=""; }
+    }
+    setFiringAf(afText);
+    setFiring({alarm, vision});
+    setTimeout(()=>{ setFiring(null); setFiringAf(""); }, 12000);
+  }
+
+  async function generateAffirmation() {
+    if (!intention||afLoading) return;
+    setAfLoading(true); setAfRevealed(false); setAffirmation("");
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000,
+          system:"You are ManiFestinger's cosmic oracle. Generate ONE powerful personal affirmation: 2-4 sentences, present tense, poetic, end with short ALL CAPS mantra. Respond ONLY with the affirmation.",
+          messages:[{role:"user",content:`Affirmation for: ${intention}`}],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.map(b=>b.text||"").join("").trim()||"I am aligned with the universe. Everything flows to me.\n\nI RECEIVE.";
+      setAffirmation(text);
+      setAfLog(prev=>[{text, intention, date:today}, ...prev].slice(0,50));
+    } catch { setAffirmation("I am aligned with the universe. Everything I desire flows to me effortlessly.\n\nI RECEIVE."); }
+    finally { setAfLoading(false); setTimeout(()=>setAfRevealed(true),80); }
+  }
+
+  async function generateGrabAffirm(int) {
+    if (!int) return;
+    setGrabAfLoading(true); setGrabAffirm("");
+    const code = GRABOVOI_CODES[int]?.code || "";
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:400,
+          system:`You are a Grabovoi code meditation guide. Generate a short powerful affirmation (2-3 sentences) that naturally weaves in the Grabovoi code numbers as a chant or mantra. The code should feel sacred, not random. End with the code itself on its own line. Respond ONLY with the affirmation text.`,
+          messages:[{role:"user",content:`Intention: ${int}\nGrabovoi Code: ${code}`}],
+        }),
+      });
+      const data = await res.json();
+      setGrabAffirm(data.content?.map(b=>b.text||"").join("").trim()||`I align with the frequency of ${int}.\n\n${code}`);
+    } catch { setGrabAffirm(`I align with the healing frequency of ${int}.\nI chant the sacred numbers and open to receive.\n\n${code}`); }
+    finally { setGrabAfLoading(false); }
+  }
+
+  function startMeditation() {
+    setMedActive(true);
+    setMedSecondsLeft(medMinutes * 60);
+    setMedRunning(true);
+    setMedPulse(true);
+    medCtxRef.current = playPreset(medSound, medMinutes * 60);
+  }
+
+  function stopMeditation() {
+    clearInterval(medTimerRef.current);
+    setMedDays(prev => ({...prev, [today]: true}));
+    setMedRunning(false); setMedActive(false);
+    setMedFullscreen(false); setMedSecondsLeft(null); setMedPulse(false);
+    try { medCtxRef.current?.close(); } catch {}
+  }
+
+  useEffect(()=>{
+    if (medRunning && medSecondsLeft > 0) {
+      medTimerRef.current = setInterval(()=>{
+        setMedSecondsLeft(s=>{
+          if (s<=1) { stopMeditation(); return 0; }
+          return s-1;
+        });
+      }, 1000);
+    }
+    return ()=>clearInterval(medTimerRef.current);
+  }, [medRunning]);
+
+  function fmtTime(s) {
+    const m = Math.floor(s/60), sec = s%60;
+    return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  }
+
+  function handleVisionFile(e) {
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      setVisions(p=>[...p,{id:Date.now(),src:ev.target.result,label:vLabel||"My Vision"}]);
+      setVLabel("");
+    };
+    reader.readAsDataURL(file);
+  }
+  function addVisionUrl() {
+    if(!vUrl.trim()) return;
+    setVisions(p=>[...p,{id:Date.now(),src:vUrl.trim(),label:vLabel||"My Vision"}]);
+    setVUrl(""); setVLabel("");
+  }
+  function handleAudioFile(e) {
+    const file=e.target.files[0]; if(!file) return;
+    setAUpload(URL.createObjectURL(file)); setAUploadName(file.name);
+  }
+  async function startRec() {
+    try {
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mr=new MediaRecorder(stream); const chunks=[];
+      mr.ondataavailable=e=>chunks.push(e.data);
+      mr.onstop=()=>{ setARecorded(URL.createObjectURL(new Blob(chunks,{type:"audio/webm"}))); stream.getTracks().forEach(t=>t.stop()); };
+      mrRef.current=mr; mr.start(); setRecording(true);
+    } catch { alert("Mic access needed."); }
+  }
+  function stopRec() { mrRef.current?.stop(); setRecording(false); }
+  function addAnchor() {
+    if(!aName.trim()) return;
+    let sType=null,sSrc=null,sLabel="";
+    if(soundTab===0&&aPreset){sType="preset";sSrc=aPreset.id;sLabel=aPreset.label;}
+    else if(soundTab===1&&aUpload){sType="audio";sSrc=aUpload;sLabel=aUploadName;}
+    else if(soundTab===2&&aRecorded){sType="audio";sSrc=aRecorded;sLabel="My Recording";}
+    setAnchors(p=>[...p,{id:Date.now(),name:aName,memory:aMemory,sType,sSrc,sLabel}]);
+    setAName(""); setAMemory(""); setAPreset(null); setAUpload(null); setAUploadName(""); setARecorded(null);
+  }
+  function playAnchor(a, silent=false) {
+    if(!silent&&playing===a.id){ audioRef.current?.pause(); setPlaying(null); return; }
+    if(!silent) setPlaying(a.id);
+    if(a.sType==="preset"){ playPreset(a.sSrc); if(!silent) setTimeout(()=>setPlaying(null),5000); }
+    else if(a.sType==="audio"){ const au=new Audio(a.sSrc); audioRef.current=au; au.play(); if(!silent) au.onended=()=>setPlaying(null); }
+  }
+  function openNewAlarm() { setEditing(blankAlarm()); }
+  function saveAlarm() {
+    if(!editing) return;
+    setAlarms(p=>{ const ex=p.find(a=>a.id===editing.id); return ex?p.map(a=>a.id===editing.id?editing:a):[...p,editing]; });
+    setEditing(null);
+  }
+  function updateEditing(key,val) { setEditing(e=>({...e,[key]:val})); }
+  function toggleEditDay(d) { setEditing(e=>({...e,days:e.days.includes(d)?e.days.filter(x=>x!==d):[...e.days,d]})); }
+  function previewAlarm() {
+    if(!editing) return;
+    if(editing.showVision&&visions.length===0){ alert("Add a vision photo first!"); return; }
+    fireAlarm(editing);
+  }
+
+  const NAV=[
+    {icon:"✦",  label:"Affirm",  iconStyle:{}, labelStyle:{color:"#ffd700"}},
+    {icon:"👁",  label:"Vision",  iconStyle:{fontSize:18}, labelStyle:{color:"#ffd700"}},
+    {icon:"🎵", label:"Sound",   iconStyle:{}, labelStyle:{color:"#ffd700"}},
+    {icon:"Ⅻ",  label:"Alarms",  iconStyle:{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:700,color:"#ffd700",filter:"drop-shadow(0 0 6px rgba(255,200,0,0.6))"}, labelStyle:{color:"#ffd700"}},
+    {icon:"#",  label:"Grabovoi",iconStyle:{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,color:"#ffd700",filter:"drop-shadow(0 0 6px rgba(255,200,0,0.6))"}, labelStyle:{color:"#ffd700"}},
+    {icon:"👣",  label:"Progress", iconStyle:{fontSize:16}, labelStyle:{color:"#ffd700",filter:"drop-shadow(0 0 6px rgba(255,200,0,0.6))"}},
+  ];
+  const grabData = grabIntention ? (GRABOVOI_CODES[grabIntention] || customCodes.find(c=>c.name===grabIntention)) : null;
+
+  return (
+    <div style={S.root}>
+      <div style={S.starfield}>
+        {STARS.map(s=>(
+          <div key={s.id} style={{...S.star,left:`${s.x}%`,top:`${s.y}%`,
+            width:s.size,height:s.size,animationDelay:`${s.delay}s`,animationDuration:`${s.dur}s`}}/>
+        ))}
+      </div>
+      <div style={S.nebula}>
+        {[["15%","20%","#7b2fff",340],["80%","70%","#1a6bff",280],["60%","10%","#c020b0",200],["20%","80%","#0d4bcc",260]]
+          .map(([x,y,c,sz],i)=>(
+            <div key={i} style={{...S.orb,left:x,top:y,background:c,width:sz,height:sz,animationDelay:`${i*1.2}s`}}/>
+          ))}
+      </div>
+
+      <div style={S.layout}>
+        {/* ── Sidebar ── */}
+        <div style={S.sidebar}>
+          <div style={S.logoWrap}>
+            <div style={S.logoRing}><span style={S.logoIcon}>✦</span></div>
+            <h1 style={S.title}>ManiFestinger</h1>
+            <p style={S.tagline}>Manifest your dreams<br/>one reminder at a time</p>
+          </div>
+          <nav style={S.nav}>
+            {NAV.map(({icon,label,iconStyle,labelStyle},i)=>(
+              <button key={i} style={{...S.navBtn,...(tab===i?S.navBtnActive:{})}} onClick={()=>setTab(i)}>
+                <span style={{...S.navIcon,...iconStyle}}>{icon}</span>
+                <span style={{...S.navLabel,...labelStyle}}>{label}</span>
+              </button>
+            ))}
+          </nav>
+          {tab===0&&(
+            <div style={S.sideControls}>
+              <p style={S.sideLabel}>INTENTION</p>
+              <div style={{position:"relative",width:"100%"}}>
+                <button style={{...S.sideSelect,...(intentionOpen?S.sideSelectOpen:{})}} onClick={()=>setIntentionOpen(o=>!o)}>
+                  <span style={{fontSize:10,color:intention?"#e0c0ff":"rgba(180,140,255,0.45)",fontStyle:intention?"normal":"italic",flex:1,textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {intention||"Select..."}
+                  </span>
+                  <span style={{color:"rgba(180,120,255,0.6)",transition:"transform 0.2s",transform:intentionOpen?"rotate(180deg)":"rotate(0deg)",fontSize:12}}>▾</span>
+                </button>
+                {intentionOpen&&(
+                  <div style={S.sideDrop}>
+                    {INTENTIONS.map(int=>(
+                      <button key={int} style={{...S.sideDropItem,...(intention===int?S.sideDropItemOn:{})}}
+                        onClick={()=>{setIntention(int);setIntentionOpen(false);setAffirmation("");setAfRevealed(false);}}>
+                        {int}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button style={{...S.genBtn,...(!intention||afLoading?S.btnOff:{})}} onClick={generateAffirmation} disabled={!intention||afLoading}>
+                {afLoading?<span style={S.loadRow}><span style={S.spin}/>Channeling...</span>:"✦ Generate"}
+              </button>
+              {affirmation&&<button style={S.regenBtn} onClick={generateAffirmation} disabled={afLoading}>↺ New</button>}
+            </div>
+          )}
+        </div>
+
+        {/* ── Main ── */}
+        <div style={S.main}>
+
+          {/* TAB 0 — Affirmations */}
+          {tab===0&&!affirmation&&(
+            <div style={S.skyHint}>
+              <span style={S.hintStar}>✦</span>
+              <p style={S.hintText}>Choose your intention<br/>and generate your affirmation</p>
+            </div>
+          )}
+          {tab===0&&affirmation&&(
+            <div style={{...S.afCard,opacity:afRevealed?1:0,transform:afRevealed?"translateY(0) scale(1)":"translateY(30px) scale(0.95)"}}>
+              <div style={S.afGlow}/>
+              <p style={S.afBadge}>{intention?.toUpperCase()}</p>
+              <p style={S.afText}>{affirmation}</p>
+              <div style={S.afDivider}/>
+            </div>
+          )}
+
+          {/* TAB 1 — Vision Board */}
+          {tab===1&&(
+            <div style={S.card}>
+              <p style={S.cardLabel}>YOUR VISION BOARD</p>
+              <div style={S.inputCol}>
+                <input style={S.input} placeholder="Label (e.g. My BMW 🚗)" value={vLabel} onChange={e=>setVLabel(e.target.value)}/>
+                <div style={S.row}>
+                  <button style={S.addBtn} onClick={()=>fileRef.current?.click()}>📁 Upload</button>
+                  <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleVisionFile}/>
+                  <span style={S.orTxt}>or</span>
+                  <input style={{...S.input,flex:1}} placeholder="Paste URL..." value={vUrl} onChange={e=>setVUrl(e.target.value)}/>
+                  <button style={S.addBtn} onClick={addVisionUrl}>Add ✦</button>
+                </div>
+              </div>
+              {visions.length===0?(
+                <div style={S.empty}><span style={{fontSize:32}}>📸</span>
+                  <p style={S.emptyTxt}>Add photos of your dreams.<br/>See them. Feel them. Believe them.</p>
+                </div>
+              ):(
+                <div style={S.grid}>
+                  {visions.map(v=>(
+                    <div key={v.id} style={S.gridItem} onClick={()=>setFocusedV(v)}>
+                      <img src={v.src} alt={v.label} style={S.gridImg} onError={e=>e.target.src="https://placehold.co/300x200/1a0a3a/9060ff?text=Vision"}/>
+                      <div style={S.gridOverlay}>
+                        <span style={S.gridLabel}>{v.label}</span>
+                        <button style={S.delBtn} onClick={e=>{e.stopPropagation();setVisions(p=>p.filter(x=>x.id!==v.id));}}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2 — Sound Anchors */}
+          {tab===2&&(
+            <div style={S.card}>
+              <p style={S.cardLabel}>SOUND ANCHORS</p>
+              <p style={S.helpTxt}>Attach a sound to your greatest life memories. Every time you hear it, your brain snaps back to that winning state. 🧠⚡</p>
+              <input style={S.input} placeholder="Anchor name (e.g. Championship Win)" value={aName} onChange={e=>setAName(e.target.value)}/>
+              <textarea style={S.textarea} placeholder="Describe the memory or feeling..." value={aMemory} onChange={e=>setAMemory(e.target.value)} rows={2}/>
+              <div style={S.stRow}>
+                {["🔔 Presets","📁 Upload","🎙️ Record"].map((t,i)=>(
+                  <button key={i} style={{...S.stBtn,...(soundTab===i?S.stBtnOn:{})}} onClick={()=>setSoundTab(i)}>{t}</button>
+                ))}
+              </div>
+              {soundTab===0&&(
+                <div style={S.presetGrid}>
+                  {PRESET_SOUNDS.map(ps=>(
+                    <button key={ps.id} style={{...S.presetBtn,...(aPreset?.id===ps.id?S.presetBtnOn:{})}} onClick={()=>setAPreset(ps)}>
+                      <span style={{fontSize:20}}>{ps.emoji}</span>
+                      <span style={{fontSize:10,color:"rgba(220,190,255,0.8)"}}>{ps.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {soundTab===1&&(
+                <div style={S.uploadZone}>
+                  <button style={S.addBtn} onClick={()=>audioFileRef.current?.click()}>📁 Choose Audio</button>
+                  <input ref={audioFileRef} type="file" accept="audio/*" style={{display:"none"}} onChange={handleAudioFile}/>
+                  {aUpload&&<p style={S.uploadedTxt}>✓ {aUploadName}</p>}
+                </div>
+              )}
+              {soundTab===2&&(
+                <div style={S.uploadZone}>
+                  {!recording
+                    ?<button style={{...S.addBtn,background:"rgba(200,40,100,0.25)"}} onClick={startRec}>🎙️ Start Recording</button>
+                    :<button style={{...S.addBtn,background:"rgba(200,40,40,0.4)"}} onClick={stopRec}>⏹ Stop</button>
+                  }
+                  {aRecorded&&<p style={S.uploadedTxt}>✓ Recording ready</p>}
+                </div>
+              )}
+              <button style={{...S.genBtn,...(!aName.trim()?S.btnOff:{})}} onClick={addAnchor} disabled={!aName.trim()}>✦ Save Anchor</button>
+              {anchors.length>0&&(
+                <div style={S.inputCol}>
+                  <p style={S.cardLabel}>MY ANCHORS</p>
+                  {anchors.map(a=>(
+                    <div key={a.id} style={S.anchorRow}>
+                      <button style={{...S.playBtn,...(playing===a.id?S.playBtnOn:{})}} onClick={()=>playAnchor(a)}>
+                        {playing===a.id?"⏸":"▶"}
+                      </button>
+                      <div style={{flex:1,minWidth:0}}>
+                        <p style={S.anchorName}>{a.name}</p>
+                        {a.memory&&<p style={S.anchorMem}>{a.memory}</p>}
+                        {a.sLabel&&<p style={S.anchorSound}>🎵 {a.sLabel}</p>}
+                      </div>
+                      <button style={S.delBtn} onClick={()=>setAnchors(p=>p.filter(x=>x.id!==a.id))}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3 — Alarms */}
+          {tab===3&&!editing&&(
+            <div style={S.card}>
+              <p style={S.cardLabel}>⏰ MY ALARMS</p>
+              <p style={S.helpTxt}>Each alarm can show a vision photo, play a sound anchor, and display an affirmation — all at once or mix and match. 🔥</p>
+              <button style={{...S.genBtn,marginBottom:4}} onClick={openNewAlarm}>＋ Create New Alarm</button>
+              {alarms.length===0&&(
+                <div style={S.empty}><span style={{fontSize:30}}>⏰</span>
+                  <p style={S.emptyTxt}>No alarms yet.<br/>Create one to start manifesting on schedule!</p>
+                </div>
+              )}
+              {alarms.map(a=>(
+                <div key={a.id} style={S.alarmCard}>
+                  <div style={{flex:1}}>
+                    <p style={S.alarmName}>{a.label||"Unnamed Alarm"}</p>
+                    <p style={S.alarmMeta}>{a.time} · {a.days.join(" ")}</p>
+                    <div style={S.alarmTags}>
+                      {a.showVision&&<span style={S.tag}>📸 Vision</span>}
+                      {a.playSound&&<span style={S.tag}>🎵 Sound</span>}
+                      {a.showAffirm&&<span style={S.tag}>✦ Affirm</span>}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:5,alignItems:"flex-end"}}>
+                    <button style={{...S.toggleBtn,...(a.active?S.toggleOn:{})}}
+                      onClick={()=>setAlarms(p=>p.map(x=>x.id===a.id?{...x,active:!x.active}:x))}>
+                      {a.active?"ON":"OFF"}
+                    </button>
+                    <button style={S.editBtn} onClick={()=>setEditing({...a})}>Edit</button>
+                    <button style={S.delBtn} onClick={()=>setAlarms(p=>p.filter(x=>x.id!==a.id))}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {tab===3&&editing&&(
+            <div style={S.card}>
+              <p style={S.cardLabel}>⏰ {alarms.find(a=>a.id===editing.id)?"EDIT":"NEW"} ALARM</p>
+              <input style={S.input} placeholder="Alarm label (e.g. Morning Grind 💪🏾)"
+                value={editing.label} onChange={e=>updateEditing("label",e.target.value)}/>
+              <div>
+                <p style={S.miniLabel}>TIME</p>
+                <input style={S.input} type="time" value={editing.time} onChange={e=>updateEditing("time",e.target.value)}/>
+              </div>
+              <div>
+                <p style={S.miniLabel}>REPEAT DAYS</p>
+                <div style={S.dayRow}>
+                  {DAYS_LIST.map((d,i)=>(
+                    <button key={d} style={{...S.dayBtn,...(editing.days.includes(d)?S.dayBtnOn:{})}} onClick={()=>toggleEditDay(d)}>
+                      {DAY_SHORT[i]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={S.alarmBox}>
+                <p style={S.alarmBoxLabel}>WHAT HAPPENS WHEN THIS FIRES?</p>
+                <div style={S.featureRow}>
+                  <div style={{flex:1}}>
+                    <p style={S.featureTitle}>📸 Show Vision Photo</p>
+                    <p style={S.featureSub}>Fullscreen motivation pic</p>
+                  </div>
+                  <button style={{...S.toggleBtn,...(editing.showVision?S.toggleOn:{})}} onClick={()=>updateEditing("showVision",!editing.showVision)}>
+                    {editing.showVision?"ON":"OFF"}
+                  </button>
+                </div>
+                {editing.showVision&&visions.length>0&&(
+                  <div style={S.pickerWrap}>
+                    <p style={S.miniLabel}>WHICH PHOTO?</p>
+                    <div style={S.pickerRow}>
+                      <button style={{...S.pickerOpt,...(!editing.visionId?S.pickerOptOn:{})}} onClick={()=>updateEditing("visionId",null)}>🔀 Random</button>
+                      {visions.map(v=>(
+                        <button key={v.id} style={{...S.pickerOpt,...(editing.visionId===v.id?S.pickerOptOn:{})}} onClick={()=>updateEditing("visionId",v.id)}>{v.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div style={S.featureRow}>
+                  <div style={{flex:1}}>
+                    <p style={S.featureTitle}>🎵 Play Sound Anchor</p>
+                    <p style={S.featureSub}>Fire your emotional trigger</p>
+                  </div>
+                  <button style={{...S.toggleBtn,...(editing.playSound?S.toggleOn:{})}} onClick={()=>updateEditing("playSound",!editing.playSound)}>
+                    {editing.playSound?"ON":"OFF"}
+                  </button>
+                </div>
+                {editing.playSound&&anchors.length>0&&(
+                  <div style={S.pickerWrap}>
+                    <p style={S.miniLabel}>WHICH ANCHOR?</p>
+                    <div style={S.pickerRow}>
+                      <button style={{...S.pickerOpt,...(!editing.anchorId?S.pickerOptOn:{})}} onClick={()=>updateEditing("anchorId",null)}>🔀 Random</button>
+                      {anchors.map(a=>(
+                        <button key={a.id} style={{...S.pickerOpt,...(editing.anchorId===a.id?S.pickerOptOn:{})}} onClick={()=>updateEditing("anchorId",a.id)}>{a.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {editing.playSound&&anchors.length===0&&(
+                  <p style={{fontSize:10,color:"rgba(255,180,100,0.7)",margin:0,textAlign:"center"}}>⚠️ Add a sound anchor in the Sound tab first</p>
+                )}
+                <div style={S.featureRow}>
+                  <div style={{flex:1}}>
+                    <p style={S.featureTitle}>✦ Show Affirmation</p>
+                    <p style={S.featureSub}>AI-generated cosmic message</p>
+                  </div>
+                  <button style={{...S.toggleBtn,...(editing.showAffirm?S.toggleOn:{})}} onClick={()=>updateEditing("showAffirm",!editing.showAffirm)}>
+                    {editing.showAffirm?"ON":"OFF"}
+                  </button>
+                </div>
+                {editing.showAffirm&&(
+                  <div style={S.pickerWrap}>
+                    <p style={S.miniLabel}>INTENTION</p>
+                    <div style={S.pickerRow}>
+                      {INTENTIONS.map(int=>(
+                        <button key={int} style={{...S.pickerOpt,...(editing.affirmIntention===int?S.pickerOptOn:{})}} onClick={()=>updateEditing("affirmIntention",int)}>{int}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={S.row}>
+                <button style={{...S.genBtn,flex:1,background:"linear-gradient(135deg,#7a4800,#cc8800)",boxShadow:"0 4px 20px rgba(180,100,0,0.4)"}} onClick={previewAlarm}>👁 Preview</button>
+                <button style={{...S.genBtn,flex:2}} onClick={saveAlarm}>✦ Save Alarm</button>
+              </div>
+              <button style={S.regenBtn} onClick={()=>setEditing(null)}>← Back</button>
+            </div>
+          )}
+
+          {/* TAB 4 — Grabovoi */}
+          {tab===4&&(
+            <div style={S.card}>
+              <p style={S.cardLabel}>✦ GRABOVOI CODE LOOKUP</p>
+              <p style={S.helpTxt}>Select your intention to reveal its sacred Grabovoi healing code and generate a meditation affirmation. 🌌</p>
+
+              {/* Intention picker — built-in + custom */}
+              <div style={{position:"relative",width:"100%"}}>
+                <button style={{...S.sideSelect,fontSize:13,padding:"12px 14px",...(grabOpen?S.sideSelectOpen:{})}}
+                  onClick={()=>setGrabOpen(o=>!o)}>
+                  <span style={{color:grabIntention?"#e0c0ff":"rgba(180,140,255,0.45)",fontStyle:grabIntention?"normal":"italic",flex:1,textAlign:"left"}}>
+                    {grabIntention||"Select your intention..."}
+                  </span>
+                  <span style={{color:"rgba(180,120,255,0.6)",transition:"transform 0.2s",transform:grabOpen?"rotate(180deg)":"rotate(0deg)",fontSize:14}}>▾</span>
+                </button>
+                {grabOpen&&(
+                  <div style={S.sideDrop}>
+                    <p style={{fontSize:8,letterSpacing:"0.15em",color:"rgba(255,200,0,0.5)",fontWeight:700,padding:"8px 12px 4px",margin:0}}>BUILT-IN CODES</p>
+                    {Object.keys(GRABOVOI_CODES).map(int=>(
+                      <button key={int} style={{...S.sideDropItem,fontSize:12,padding:"10px 14px",...(grabIntention===int?S.sideDropItemOn:{})}}
+                        onClick={()=>{ setGrabIntention(int); setGrabOpen(false); setGrabAffirm(""); setMedActive(false); }}>
+                        # {int}
+                      </button>
+                    ))}
+                    {customCodes.length>0&&(
+                      <>
+                        <p style={{fontSize:8,letterSpacing:"0.15em",color:"rgba(180,140,255,0.5)",fontWeight:700,padding:"8px 12px 4px",margin:0}}>MY CUSTOM CODES</p>
+                        {customCodes.map(c=>(
+                          <button key={c.name} style={{...S.sideDropItem,fontSize:12,padding:"10px 14px",...(grabIntention===c.name?S.sideDropItemOn:{})}}
+                            onClick={()=>{ setGrabIntention(c.name); setGrabOpen(false); setGrabAffirm(""); setMedActive(false); }}>
+                            ✦ {c.name}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Add custom code */}
+              <button style={{...S.regenBtn,fontSize:10}} onClick={()=>setShowAddCode(s=>!s)}>
+                {showAddCode?"▲ Hide":"＋ Add Your Own Code"}
+              </button>
+              {showAddCode&&(
+                <div style={S.alarmBox}>
+                  <p style={S.alarmBoxLabel}>ADD CUSTOM CODE</p>
+                  <input style={S.input} placeholder="Intention name (e.g. Weight Loss)" value={newCodeName} onChange={e=>setNewCodeName(e.target.value)}/>
+                  <input style={S.input} placeholder="Code number (e.g. 5342168)" value={newCodeNumber} onChange={e=>setNewCodeNumber(e.target.value)}/>
+                  <input style={S.input} placeholder="Description (optional)" value={newCodeDesc} onChange={e=>setNewCodeDesc(e.target.value)}/>
+                  <button style={{...S.genBtn,...(!newCodeName.trim()||!newCodeNumber.trim()?S.btnOff:{})}}
+                    onClick={()=>{
+                      if(!newCodeName.trim()||!newCodeNumber.trim()) return;
+                      setCustomCodes(p=>[...p,{name:newCodeName.trim(),code:newCodeNumber.trim(),desc:newCodeDesc.trim()||"Custom Grabovoi code"}]);
+                      setNewCodeName(""); setNewCodeNumber(""); setNewCodeDesc(""); setShowAddCode(false);
+                    }}
+                    disabled={!newCodeName.trim()||!newCodeNumber.trim()}>
+                    ✦ Save Code
+                  </button>
+                </div>
+              )}
+
+              {/* Code display */}
+              {grabData&&(
+                <>
+                  <div style={S.codeCard}>
+                    <p style={S.codeLabel}>GRABOVOI CODE</p>
+                    <p style={S.codeNumber}>{grabData.code}</p>
+                    <p style={S.codeIntention}>{grabIntention?.toUpperCase()}</p>
+                    <p style={S.codeDesc}>{grabData.desc}</p>
+                  </div>
+
+                  {/* Affirmation generator */}
+                  {!grabAffirm&&(
+                    <button style={{...S.genBtn,...(grabAfLoading?S.btnOff:{})}} onClick={()=>generateGrabAffirm(grabIntention)} disabled={grabAfLoading}>
+                      {grabAfLoading?<span style={S.loadRow}><span style={S.spin}/>Channeling code...</span>:"✦ Generate Code Affirmation"}
+                    </button>
+                  )}
+                  {grabAffirm&&(
+                    <div style={S.grabAfCard}>
+                      <p style={S.grabAfText}>{grabAffirm}</p>
+                      <button style={S.regenBtn} onClick={()=>generateGrabAffirm(grabIntention)} disabled={grabAfLoading}>↺ New Affirmation</button>
+                    </div>
+                  )}
+
+                  {/* Meditation mode */}
+                  {!medActive&&(
+                    <div style={S.medSetup}>
+                      <p style={S.miniLabel}>MEDITATION TIMER</p>
+                      <div style={S.row}>
+                        {[1,3,5,10,15,20].map(m=>(
+                          <button key={m} style={{...S.pickerOpt,...(medMinutes===m?S.pickerOptOn:{})}} onClick={()=>setMedMinutes(m)}>{m}m</button>
+                        ))}
+                      </div>
+                      <p style={S.miniLabel}>AMBIENT SOUND</p>
+                      <div style={S.presetGrid}>
+                        {PRESET_SOUNDS.map(ps=>(
+                          <button key={ps.id} style={{...S.presetBtn,...(medSound===ps.id?S.presetBtnOn:{})}} onClick={()=>setMedSound(ps.id)}>
+                            <span style={{fontSize:18}}>{ps.emoji}</span>
+                            <span style={{fontSize:9,color:"rgba(220,190,255,0.8)"}}>{ps.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div style={S.row}>
+                        <button style={{...S.genBtn,flex:1}} onClick={startMeditation}>🧘🏾 Start Meditation</button>
+                        <button style={{...S.genBtn,flex:1,background:"linear-gradient(135deg,#7a4800,#cc8800)"}} onClick={()=>{ startMeditation(); setMedFullscreen(true); }}>
+                          ⛶ Fullscreen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {medActive&&!medFullscreen&&(
+                    <div style={S.medCard}>
+                      <p style={S.medTimer}>{fmtTime(medSecondsLeft)}</p>
+                      <p style={S.medCodePulse}>{grabData.code}</p>
+                      {grabAffirm&&<p style={S.medAfText}>{grabAffirm}</p>}
+                      <div style={S.row}>
+                        <button style={{...S.genBtn,flex:1,background:"linear-gradient(135deg,#7a4800,#cc8800)"}} onClick={()=>setMedFullscreen(true)}>⛶ Fullscreen</button>
+                        <button style={{...S.genBtn,flex:1,background:"rgba(200,40,40,0.4)",boxShadow:"none"}} onClick={stopMeditation}>⏹ End</button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              {!grabData&&(
+                <div style={S.empty}>
+                  <span style={{fontSize:32}}>🔢</span>
+                  <p style={S.emptyTxt}>Select an intention above to reveal<br/>its sacred Grabovoi code.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5 — Progress */}
+          {tab===5&&(()=>{
+            // Compute streak
+            const sortedDays = Object.keys(medDays).sort().reverse();
+            let streak = 0;
+            let check = new Date();
+            for (let i=0; i<60; i++) {
+              const d = check.toISOString().split("T")[0];
+              if (medDays[d]) { streak++; check.setDate(check.getDate()-1); }
+              else if (i===0) { check.setDate(check.getDate()-1); continue; }
+              else break;
+            }
+            // Last 30 days for calendar
+            const last30 = Array.from({length:30},(_,i)=>{
+              const d = new Date(); d.setDate(d.getDate()-i);
+              return d.toISOString().split("T")[0];
+            }).reverse();
+
+            return (
+              <div style={S.card}>
+                <p style={S.cardLabel}>◎ YOUR PROGRESS</p>
+
+                {/* Streak + stats row */}
+                <div style={S.statsRow}>
+                  <div style={S.statBox}>
+                    <p style={S.statNum}>{streak}</p>
+                    <p style={S.statLabel}>Day Streak 🔥</p>
+                  </div>
+                  <div style={S.statBox}>
+                    <p style={S.statNum}>{Object.keys(medDays).length}</p>
+                    <p style={S.statLabel}>Days Meditated</p>
+                  </div>
+                  <div style={S.statBox}>
+                    <p style={S.statNum}>{afLog.length}</p>
+                    <p style={S.statLabel}>Affirmations</p>
+                  </div>
+                </div>
+
+                {/* Log today button */}
+                <button style={{...S.genBtn, ...(medDays[today]?S.btnOff:{})}}
+                  onClick={()=>setMedDays(prev=>({...prev,[today]:true}))}
+                  disabled={!!medDays[today]}>
+                  {medDays[today]?"✓ Meditation Logged Today":"✦ Log Today's Meditation"}
+                </button>
+
+                {/* 30-day calendar */}
+                <div style={S.alarmBox}>
+                  <p style={S.alarmBoxLabel}>LAST 30 DAYS</p>
+                  <div style={S.calGrid}>
+                    {last30.map(d=>(
+                      <div key={d} title={d} style={{...S.calDay,...(medDays[d]?S.calDayOn:{})}}>
+                        {medDays[d]?"✦":""}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Goals tracker */}
+                <div style={S.alarmBox}>
+                  <p style={S.alarmBoxLabel}>DREAM GOALS</p>
+                  {goals.length===0&&!showGoalForm&&(
+                    <p style={S.emptyTxt}>Set a goal and track your milestones.</p>
+                  )}
+                  {goals.map((g,i)=>(
+                    <div key={i} style={S.goalItem}>
+                      <div style={{flex:1}}>
+                        <p style={S.goalName}>{g.text}</p>
+                        <div style={S.progressBarWrap}>
+                          <div style={{...S.progressBar, width:`${Math.min(100,Math.round((g.current/g.target)*100))}%`}}/>
+                        </div>
+                        <p style={S.goalMeta}>{g.current} / {g.target} milestones · {Math.round((g.current/g.target)*100)}%</p>
+                      </div>
+                      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                        <button style={S.addBtn} onClick={()=>setGoals(prev=>prev.map((x,j)=>j===i?{...x,current:Math.min(x.target,x.current+1)}:x))}>+1</button>
+                        <button style={S.delBtn} onClick={()=>setGoals(prev=>prev.filter((_,j)=>j!==i))}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                  {showGoalForm&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      <input style={S.input} placeholder="Your dream goal (e.g. Buy my BMW 🚗)" value={newGoalText} onChange={e=>setNewGoalText(e.target.value)}/>
+                      <div style={S.row}>
+                        <span style={{fontSize:11,color:"rgba(180,140,255,0.6)",flexShrink:0}}>Milestones:</span>
+                        {[5,10,20,30,50,100].map(n=>(
+                          <button key={n} style={{...S.pickerOpt,...(newGoalTarget===n?S.pickerOptOn:{})}} onClick={()=>setNewGoalTarget(n)}>{n}</button>
+                        ))}
+                      </div>
+                      <div style={S.row}>
+                        <button style={{...S.genBtn,flex:2,...(!newGoalText.trim()?S.btnOff:{})}}
+                          onClick={()=>{
+                            if(!newGoalText.trim()) return;
+                            setGoals(prev=>[...prev,{text:newGoalText.trim(),target:newGoalTarget,current:0}]);
+                            setNewGoalText(""); setShowGoalForm(false);
+                          }}
+                          disabled={!newGoalText.trim()}>✦ Save Goal</button>
+                        <button style={{...S.regenBtn,flex:1}} onClick={()=>setShowGoalForm(false)}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                  {!showGoalForm&&(
+                    <button style={S.regenBtn} onClick={()=>setShowGoalForm(true)}>＋ Add Goal</button>
+                  )}
+                </div>
+
+                {/* Recent affirmations log */}
+                {afLog.length>0&&(
+                  <div style={S.alarmBox}>
+                    <p style={S.alarmBoxLabel}>RECENT AFFIRMATIONS</p>
+                    {afLog.slice(0,5).map((a,i)=>(
+                      <div key={i} style={S.afLogItem}>
+                        <p style={S.afLogBadge}>{a.intention}</p>
+                        <p style={S.afLogText}>{a.text.length>120?a.text.slice(0,120)+"...":a.text}</p>
+                        <p style={S.afLogDate}>{a.date}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <p style={S.footer}>Powered by cosmic intelligence ✦ ManiFestinger</p>
+        </div>
+      </div>
+
+      {/* Vision focus modal */}
+      {focusedV&&(
+        <div style={S.modal} onClick={()=>setFocusedV(null)}>
+          <div style={S.modalBox} onClick={e=>e.stopPropagation()}>
+            <img src={focusedV.src} alt={focusedV.label} style={S.modalImg} onError={e=>e.target.src="https://placehold.co/600x400/1a0a3a/9060ff?text=Vision"}/>
+            <p style={S.modalLabel}>{focusedV.label}</p>
+            <p style={S.modalAffirm}>This is mine. I claim it. I am worthy of this and more. ✦</p>
+            <button style={S.modalClose} onClick={()=>setFocusedV(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Alarm fullscreen */}
+      {firing&&(
+        <div style={S.alarmModal} onClick={()=>{setFiring(null);setFiringAf("");}}>
+          {firing.vision
+            ?<img src={firing.vision.src} alt={firing.vision.label} style={S.alarmImg} onError={e=>e.target.src="https://placehold.co/800x600/020010/9060ff?text=Vision"}/>
+            :<div style={{...S.alarmImg,background:"linear-gradient(135deg,#0a0020,#1a0050)"}}/>
+          }
+          <div style={S.alarmOverlay}>
+            <p style={S.alarmTitle}>{firing.alarm.label||"ManiFestinger"}</p>
+            {firing.vision&&<p style={S.alarmVisionLabel}>{firing.vision.label}</p>}
+            {firingAf&&<p style={S.alarmAf}>{firingAf}</p>}
+            <p style={S.alarmSub}>Stay focused. Stay aligned. ✦</p>
+            <p style={S.alarmDismiss}>Tap anywhere to close</p>
+          </div>
+        </div>
+      )}
+
+      {/* Meditation fullscreen */}
+      {medActive&&medFullscreen&&grabData&&(
+        <div style={S.medFullscreen}>
+          <div style={S.medFsInner}>
+            <p style={S.medFsTimer}>{fmtTime(medSecondsLeft)}</p>
+            <p style={S.medFsIntention}>{grabIntention?.toUpperCase()}</p>
+            <p style={{...S.medFsCode,animation:medPulse?"codePulse 2s ease-in-out infinite":undefined}}>{grabData.code}</p>
+            {grabAffirm&&<p style={S.medFsAffirm}>{grabAffirm}</p>}
+            <div style={S.row}>
+              <button style={{...S.genBtn,flex:1,background:"rgba(255,255,255,0.08)",boxShadow:"none",border:"1px solid rgba(255,255,255,0.15)"}}
+                onClick={()=>setMedFullscreen(false)}>⊡ Exit Fullscreen</button>
+              <button style={{...S.genBtn,flex:1,background:"rgba(200,40,40,0.4)",boxShadow:"none"}} onClick={stopMeditation}>⏹ End</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Raleway:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+        @keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+        @keyframes float{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes logoSpin{to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes codePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.06)}}
+        @keyframes codeGlow{0%,100%{text-shadow:0 0 30px rgba(255,200,0,0.6)}50%{text-shadow:0 0 60px rgba(255,200,0,1),0 0 100px rgba(255,160,0,0.6)}}
+        *{box-sizing:border-box} textarea{resize:vertical} input[type=time]{color-scheme:dark}
+      `}</style>
+    </div>
+  );
+}
+
+const S = {
+  root:{minHeight:"100vh",background:"#02000f",position:"relative",overflow:"hidden",fontFamily:"'Raleway',sans-serif"},
+  starfield:{position:"fixed",inset:0,pointerEvents:"none",zIndex:0},
+  star:{position:"absolute",borderRadius:"50%",background:"#fff",animation:"twinkle ease-in-out infinite"},
+  nebula:{position:"fixed",inset:0,pointerEvents:"none",zIndex:0},
+  orb:{position:"absolute",borderRadius:"50%",filter:"blur(80px)",opacity:.18,transform:"translate(-50%,-50%)",animation:"float 8s ease-in-out infinite"},
+  layout:{position:"relative",zIndex:1,display:"flex",minHeight:"100vh"},
+  sidebar:{width:120,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 8px",gap:16,borderRight:"1px solid rgba(180,100,255,0.12)",background:"rgba(5,0,20,0.55)",backdropFilter:"blur(12px)",position:"sticky",top:0,height:"100vh",overflowY:"auto"},
+  logoWrap:{display:"flex",flexDirection:"column",alignItems:"center",gap:6,textAlign:"center"},
+  logoRing:{width:44,height:44,borderRadius:"50%",border:"1.5px solid rgba(180,100,255,0.6)",display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(120,40,255,0.15)",boxShadow:"0 0 24px rgba(150,60,255,0.4)",animation:"logoSpin 20s linear infinite"},
+  logoIcon:{fontSize:20,color:"#d4a0ff"},
+  title:{fontFamily:"'Cinzel Decorative',serif",fontSize:12,fontWeight:700,margin:0,background:"linear-gradient(135deg,#ffe066,#ffd700,#ffaa00,#ffe566)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 10px rgba(255,200,0,0.6))",lineHeight:1.3,textAlign:"center"},
+  tagline:{fontSize:8,color:"rgba(200,170,255,0.55)",fontStyle:"italic",margin:0,textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1.5,textAlign:"center"},
+  nav:{display:"flex",flexDirection:"column",gap:4,width:"100%"},
+  navBtn:{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"9px 4px",background:"transparent",border:"1px solid transparent",color:"rgba(200,170,255,0.45)",cursor:"pointer",borderRadius:10,transition:"all 0.2s"},
+  navBtnActive:{background:"rgba(120,60,255,0.28)",border:"1px solid rgba(180,100,255,0.35)",color:"#e0c0ff",boxShadow:"0 0 14px rgba(140,60,255,0.2)"},
+  navIcon:{fontSize:16,fontFamily:"'Playfair Display',serif",fontWeight:700,lineHeight:1,letterSpacing:"0.05em"},
+  navLabel:{fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",fontWeight:700,color:"#ffd700"},
+  sideControls:{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"},
+  sideLabel:{fontSize:8,letterSpacing:"0.2em",color:"#ffd700",fontWeight:700,margin:0,textAlign:"center",filter:"drop-shadow(0 0 4px rgba(255,200,0,0.4))"},
+  sideSelect:{width:"100%",padding:"8px 10px",background:"rgba(120,60,255,0.1)",border:"1px solid rgba(180,100,255,0.22)",borderRadius:9,color:"#d0b0ff",fontSize:10,fontFamily:"'Raleway',sans-serif",cursor:"pointer",display:"flex",alignItems:"center",gap:4,outline:"none",transition:"all 0.2s"},
+  sideSelectOpen:{borderColor:"rgba(180,100,255,0.6)",background:"rgba(120,60,255,0.2)"},
+  sideDrop:{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#0d0820",border:"1px solid rgba(180,100,255,0.3)",borderRadius:9,overflow:"hidden",zIndex:200,boxShadow:"0 12px 40px rgba(0,0,0,0.9)"},
+  sideDropItem:{width:"100%",padding:"9px 10px",background:"transparent",border:"none",color:"rgba(210,180,255,0.8)",fontSize:10,fontFamily:"'Raleway',sans-serif",cursor:"pointer",textAlign:"left",transition:"background 0.15s",display:"block"},
+  sideDropItemOn:{background:"rgba(120,60,255,0.25)",color:"#e0c0ff",fontWeight:600},
+  genBtn:{width:"100%",padding:"10px 6px",background:"linear-gradient(135deg,#6020cc,#3060dd)",border:"none",borderRadius:9,color:"#fff",fontSize:10,fontFamily:"'Cinzel Decorative',serif",fontWeight:700,cursor:"pointer",letterSpacing:"0.04em",boxShadow:"0 4px 20px rgba(90,40,200,0.5)",transition:"all 0.3s"},
+  btnOff:{opacity:.4,cursor:"not-allowed"},
+  regenBtn:{width:"100%",padding:"7px 6px",background:"transparent",border:"1px solid rgba(180,100,255,0.25)",borderRadius:8,color:"rgba(200,160,255,0.6)",fontSize:9,fontFamily:"'Raleway',sans-serif",cursor:"pointer"},
+  loadRow:{display:"flex",alignItems:"center",justifyContent:"center",gap:8},
+  spin:{width:12,height:12,border:"2px solid rgba(255,255,255,0.2)",borderTop:"2px solid #fff",borderRadius:"50%",display:"inline-block",animation:"spin 0.8s linear infinite"},
+  main:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 16px 60px",gap:16,overflowY:"auto"},
+  skyHint:{display:"flex",flexDirection:"column",alignItems:"center",gap:10,marginTop:"22vh",opacity:.4},
+  hintStar:{fontSize:30,color:"#d4a0ff",filter:"drop-shadow(0 0 12px rgba(200,140,255,0.6))",animation:"twinkle 3s ease-in-out infinite"},
+  hintText:{fontSize:12,color:"rgba(200,170,255,0.7)",textAlign:"center",fontStyle:"italic",lineHeight:1.8,letterSpacing:"0.06em",margin:0},
+  afCard:{position:"relative",background:"rgba(5,0,25,0.55)",border:"1px solid rgba(180,120,255,0.28)",borderRadius:20,padding:"32px 24px",backdropFilter:"blur(24px)",transition:"all 0.7s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 8px 60px rgba(0,0,0,0.4)",display:"flex",flexDirection:"column",alignItems:"center",gap:14,maxWidth:400,width:"100%",marginTop:"12vh"},
+  afGlow:{position:"absolute",top:-50,left:"50%",transform:"translateX(-50%)",width:180,height:100,background:"radial-gradient(ellipse,rgba(160,80,255,0.25) 0%,transparent 70%)",pointerEvents:"none"},
+  afBadge:{fontSize:9,letterSpacing:"0.22em",color:"rgba(180,140,255,0.5)",fontWeight:700,margin:0,background:"rgba(120,60,255,0.15)",padding:"3px 12px",borderRadius:20,border:"1px solid rgba(160,100,255,0.2)"},
+  afText:{fontSize:16,lineHeight:1.9,color:"#ede0ff",textAlign:"center",fontWeight:300,margin:0,fontStyle:"italic",whiteSpace:"pre-wrap",letterSpacing:"0.02em"},
+  afDivider:{width:50,height:1,background:"linear-gradient(90deg,transparent,rgba(180,100,255,0.4),transparent)"},
+  card:{width:"100%",maxWidth:480,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(180,100,255,0.2)",borderRadius:20,padding:"22px 18px",backdropFilter:"blur(16px)",display:"flex",flexDirection:"column",gap:12,boxShadow:"0 8px 40px rgba(0,0,0,0.5)"},
+  cardLabel:{fontSize:9,letterSpacing:"0.2em",color:"#ffd700",fontWeight:700,margin:0,textAlign:"center",filter:"drop-shadow(0 0 6px rgba(255,200,0,0.4))"},
+  helpTxt:{fontSize:11,color:"rgba(200,170,255,0.6)",lineHeight:1.7,margin:0,textAlign:"center",fontStyle:"italic"},
+  miniLabel:{fontSize:8,letterSpacing:"0.18em",color:"#ffd700",fontWeight:700,margin:"0 0 5px",filter:"drop-shadow(0 0 4px rgba(255,200,0,0.3))"},
+  inputCol:{display:"flex",flexDirection:"column",gap:8,width:"100%"},
+  input:{width:"100%",padding:"10px 12px",background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.2)",borderRadius:9,color:"#e0c0ff",fontSize:12,fontFamily:"'Raleway',sans-serif",outline:"none"},
+  textarea:{width:"100%",padding:"10px 12px",background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.2)",borderRadius:9,color:"#e0c0ff",fontSize:12,fontFamily:"'Raleway',sans-serif",outline:"none"},
+  row:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"},
+  addBtn:{padding:"9px 14px",background:"rgba(120,60,255,0.2)",border:"1px solid rgba(180,100,255,0.35)",borderRadius:9,color:"#d4b0ff",fontSize:11,fontFamily:"'Raleway',sans-serif",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"},
+  orTxt:{color:"rgba(180,140,255,0.4)",fontSize:11,flexShrink:0},
+  empty:{display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 0",gap:6},
+  emptyTxt:{color:"rgba(200,170,255,0.45)",fontSize:12,margin:0,textAlign:"center",lineHeight:1.7},
+  grid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8},
+  gridItem:{position:"relative",borderRadius:10,overflow:"hidden",cursor:"pointer",border:"1px solid rgba(180,100,255,0.18)",aspectRatio:"4/3"},
+  gridImg:{width:"100%",height:"100%",objectFit:"cover",display:"block"},
+  gridOverlay:{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(5,0,20,0.85))",padding:"16px 8px 7px",display:"flex",justifyContent:"space-between",alignItems:"flex-end"},
+  gridLabel:{fontSize:10,color:"#e0c0ff",fontWeight:600,flex:1},
+  delBtn:{background:"rgba(255,80,80,0.2)",border:"1px solid rgba(255,100,100,0.3)",borderRadius:5,color:"rgba(255,180,180,0.8)",fontSize:9,cursor:"pointer",padding:"2px 5px",flexShrink:0},
+  stRow:{display:"flex",gap:4,background:"rgba(255,255,255,0.03)",borderRadius:9,padding:3},
+  stBtn:{flex:1,padding:"7px 3px",background:"transparent",border:"none",color:"rgba(200,170,255,0.45)",fontSize:10,fontFamily:"'Raleway',sans-serif",cursor:"pointer",borderRadius:7,fontWeight:600,transition:"all 0.2s"},
+  stBtnOn:{background:"rgba(120,60,255,0.28)",color:"#e0c0ff"},
+  presetGrid:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7},
+  presetBtn:{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"10px 4px",background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.18)",borderRadius:10,cursor:"pointer",transition:"all 0.2s"},
+  presetBtnOn:{background:"rgba(120,60,255,0.3)",border:"1px solid rgba(180,100,255,0.6)"},
+  uploadZone:{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"14px",background:"rgba(120,60,255,0.05)",border:"1px dashed rgba(180,100,255,0.22)",borderRadius:10},
+  uploadedTxt:{fontSize:11,color:"rgba(140,220,140,0.8)",margin:0},
+  anchorRow:{display:"flex",alignItems:"flex-start",gap:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(180,100,255,0.12)",borderRadius:10,padding:"10px 12px"},
+  playBtn:{width:34,height:34,borderRadius:"50%",background:"rgba(120,60,255,0.2)",border:"1px solid rgba(180,100,255,0.3)",color:"#d4b0ff",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},
+  playBtnOn:{background:"rgba(120,60,255,0.5)",boxShadow:"0 0 14px rgba(140,60,255,0.5)"},
+  anchorName:{fontSize:13,color:"#e0c0ff",fontWeight:600,margin:"0 0 2px"},
+  anchorMem:{fontSize:10,color:"rgba(200,170,255,0.5)",margin:"0 0 2px",fontStyle:"italic",lineHeight:1.5},
+  anchorSound:{fontSize:9,color:"rgba(180,140,255,0.4)",margin:0},
+  alarmCard:{display:"flex",alignItems:"flex-start",gap:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(180,100,255,0.15)",borderRadius:12,padding:"12px 14px"},
+  alarmName:{fontSize:13,color:"#e0c0ff",fontWeight:600,margin:"0 0 2px"},
+  alarmMeta:{fontSize:10,color:"rgba(180,140,255,0.45)",margin:"0 0 5px"},
+  alarmTags:{display:"flex",gap:5,flexWrap:"wrap"},
+  tag:{fontSize:9,padding:"2px 8px",background:"rgba(120,60,255,0.2)",border:"1px solid rgba(180,100,255,0.25)",borderRadius:20,color:"rgba(200,170,255,0.7)"},
+  toggleBtn:{padding:"4px 9px",borderRadius:7,border:"1px solid rgba(180,100,255,0.25)",background:"rgba(60,60,60,0.2)",color:"rgba(180,140,255,0.45)",fontSize:9,fontWeight:700,cursor:"pointer",flexShrink:0,transition:"all 0.2s"},
+  toggleOn:{background:"rgba(60,200,100,0.18)",border:"1px solid rgba(80,220,120,0.4)",color:"rgba(120,240,150,0.9)"},
+  editBtn:{padding:"4px 9px",borderRadius:7,border:"1px solid rgba(180,100,255,0.25)",background:"rgba(120,60,255,0.15)",color:"rgba(200,170,255,0.7)",fontSize:9,fontWeight:700,cursor:"pointer"},
+  alarmBox:{display:"flex",flexDirection:"column",gap:10,width:"100%",padding:"12px",background:"rgba(120,60,255,0.05)",border:"1px solid rgba(180,100,255,0.1)",borderRadius:11},
+  alarmBoxLabel:{fontSize:9,letterSpacing:"0.18em",color:"#ffd700",fontWeight:700,margin:0,textAlign:"center",filter:"drop-shadow(0 0 4px rgba(255,200,0,0.4))"},
+  featureRow:{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid rgba(180,100,255,0.08)"},
+  featureTitle:{fontSize:12,color:"#e0c0ff",fontWeight:600,margin:"0 0 2px"},
+  featureSub:{fontSize:10,color:"rgba(180,140,255,0.45)",margin:0},
+  pickerWrap:{paddingLeft:8},
+  pickerRow:{display:"flex",flexWrap:"wrap",gap:5,marginTop:4},
+  pickerOpt:{padding:"5px 10px",background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.18)",borderRadius:8,color:"rgba(200,170,255,0.6)",fontSize:10,cursor:"pointer",fontFamily:"'Raleway',sans-serif",transition:"all 0.2s"},
+  pickerOptOn:{background:"rgba(120,60,255,0.35)",border:"1px solid rgba(180,100,255,0.6)",color:"#e0c0ff",fontWeight:600},
+  dayRow:{display:"flex",gap:4},
+  dayBtn:{width:30,height:30,borderRadius:"50%",border:"1px solid rgba(180,100,255,0.18)",background:"transparent",color:"rgba(180,140,255,0.45)",fontSize:10,fontWeight:700,cursor:"pointer",transition:"all 0.2s"},
+  dayBtnOn:{background:"rgba(120,60,255,0.35)",border:"1px solid rgba(180,100,255,0.6)",color:"#e0c0ff"},
+  // Grabovoi
+  codeCard:{width:"100%",background:"rgba(5,0,30,0.7)",border:"1px solid rgba(255,200,0,0.25)",borderRadius:16,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:8,boxShadow:"0 0 40px rgba(255,180,0,0.08)"},
+  codeLabel:{fontSize:9,letterSpacing:"0.25em",color:"rgba(255,200,0,0.55)",fontWeight:700,margin:0,textTransform:"uppercase"},
+  codeNumber:{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:700,color:"#ffd700",margin:0,textAlign:"center",filter:"drop-shadow(0 0 16px rgba(255,200,0,0.7))",letterSpacing:"0.14em",animation:"codeGlow 3s ease-in-out infinite"},
+  codeIntention:{fontSize:9,letterSpacing:"0.22em",color:"rgba(255,200,0,0.5)",fontWeight:700,margin:"2px 0 0",textTransform:"uppercase",fontFamily:"'Playfair Display',serif",fontStyle:"italic"},
+  codeDesc:{fontSize:11,color:"rgba(220,200,255,0.6)",margin:0,textAlign:"center",fontStyle:"italic"},
+  grabAfCard:{width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,200,0,0.15)",borderRadius:14,padding:"18px 16px",display:"flex",flexDirection:"column",gap:10,alignItems:"center"},
+  grabAfText:{fontSize:14,lineHeight:1.9,color:"#ede0ff",textAlign:"center",fontWeight:300,margin:0,fontStyle:"italic",whiteSpace:"pre-wrap"},
+  medSetup:{width:"100%",display:"flex",flexDirection:"column",gap:10,background:"rgba(120,60,255,0.05)",border:"1px solid rgba(180,100,255,0.12)",borderRadius:12,padding:"14px"},
+  medCard:{width:"100%",background:"rgba(5,0,30,0.8)",border:"1px solid rgba(255,200,0,0.2)",borderRadius:16,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:12},
+  medTimer:{fontFamily:"'Playfair Display',serif",fontSize:32,fontWeight:700,color:"#ffd700",margin:0,filter:"drop-shadow(0 0 16px rgba(255,200,0,0.6))"},
+  medCodePulse:{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#e0c0ff",margin:0,letterSpacing:"0.1em",animation:"codePulse 2s ease-in-out infinite"},
+  medAfText:{fontSize:12,color:"rgba(220,200,255,0.7)",textAlign:"center",fontStyle:"italic",lineHeight:1.7,margin:0},
+  medFullscreen:{position:"fixed",inset:0,zIndex:3000,background:"#02000f",display:"flex",alignItems:"center",justifyContent:"center",animation:"fadeIn 0.5s ease"},
+  medFsInner:{display:"flex",flexDirection:"column",alignItems:"center",gap:20,padding:"40px 24px",maxWidth:500,width:"100%"},
+  medFsTimer:{fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:700,color:"#ffd700",margin:0,filter:"drop-shadow(0 0 30px rgba(255,200,0,0.8))",animation:"codeGlow 2s ease-in-out infinite"},
+  medFsIntention:{fontSize:11,letterSpacing:"0.25em",color:"rgba(200,170,255,0.5)",textTransform:"uppercase",margin:0,fontWeight:700,fontFamily:"'Playfair Display',serif",fontStyle:"italic"},
+  medFsCode:{fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:700,color:"#ffe066",margin:0,textAlign:"center",letterSpacing:"0.15em",filter:"drop-shadow(0 0 20px rgba(255,200,0,0.9))"},
+  medFsAffirm:{fontSize:16,color:"rgba(230,210,255,0.85)",textAlign:"center",fontStyle:"italic",fontFamily:"'Playfair Display',serif",fontWeight:400,margin:0,lineHeight:1.9,maxWidth:380,whiteSpace:"pre-wrap"},
+  // Alarm modal
+  footer:{fontSize:9,color:"rgba(180,140,255,0.25)",letterSpacing:"0.15em",textAlign:"center",textTransform:"uppercase",marginTop:4},
+  modal:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(8px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16},
+  modalBox:{background:"#0d0820",border:"1px solid rgba(180,100,255,0.3)",borderRadius:18,padding:20,maxWidth:460,width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,boxShadow:"0 0 60px rgba(120,60,255,0.3)"},
+  modalImg:{width:"100%",borderRadius:10,maxHeight:300,objectFit:"cover"},
+  modalLabel:{fontFamily:"'Cinzel Decorative',serif",fontSize:15,color:"#e0c0ff",margin:0,textAlign:"center"},
+  modalAffirm:{fontSize:12,color:"rgba(200,170,255,0.65)",fontStyle:"italic",margin:0,textAlign:"center",lineHeight:1.7},
+  modalClose:{padding:"9px 24px",background:"rgba(120,60,255,0.2)",border:"1px solid rgba(180,100,255,0.3)",borderRadius:9,color:"#d4b0ff",fontSize:12,fontFamily:"'Raleway',sans-serif",cursor:"pointer"},
+  alarmModal:{position:"fixed",inset:0,zIndex:2000,cursor:"pointer",background:"#000",animation:"fadeIn 0.4s ease"},
+  alarmImg:{width:"100%",height:"100%",objectFit:"cover",opacity:.85,position:"absolute",inset:0},
+  alarmOverlay:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.5) 100%)",padding:28,gap:10},
+  alarmTitle:{fontFamily:"'Cinzel Decorative',serif",fontSize:24,color:"#ffd700",textAlign:"center",margin:0,filter:"drop-shadow(0 0 20px rgba(255,200,0,0.8))"},
+  alarmVisionLabel:{fontSize:13,color:"rgba(220,200,255,0.7)",margin:0,textAlign:"center",letterSpacing:"0.06em"},
+  alarmAf:{fontSize:15,color:"#fff",textAlign:"center",fontStyle:"italic",fontWeight:300,margin:"4px 0",letterSpacing:"0.04em",maxWidth:320,lineHeight:1.7},
+  alarmSub:{fontSize:13,color:"rgba(255,220,100,0.8)",textAlign:"center",margin:0,letterSpacing:"0.08em"},
+  // Progress
+  statsRow:{display:"flex",gap:8,width:"100%"},
+  statBox:{flex:1,background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.15)",borderRadius:12,padding:"12px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:4},
+  statNum:{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:"#ffd700",margin:0,filter:"drop-shadow(0 0 8px rgba(255,200,0,0.5))"},
+  statLabel:{fontSize:9,color:"rgba(180,140,255,0.6)",margin:0,textAlign:"center",letterSpacing:"0.06em",textTransform:"uppercase"},
+  calGrid:{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:4,marginTop:6},
+  calDay:{width:"100%",aspectRatio:"1",borderRadius:4,background:"rgba(120,60,255,0.08)",border:"1px solid rgba(180,100,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"rgba(180,140,255,0.3)"},
+  calDayOn:{background:"rgba(120,60,255,0.4)",border:"1px solid rgba(180,100,255,0.6)",color:"#ffd700",fontSize:10,boxShadow:"0 0 8px rgba(140,60,255,0.4)"},
+  goalItem:{display:"flex",alignItems:"center",gap:8,padding:"10px 0",borderBottom:"1px solid rgba(180,100,255,0.08)"},
+  goalName:{fontSize:12,color:"#e0c0ff",fontWeight:600,margin:"0 0 6px"},
+  goalMeta:{fontSize:10,color:"rgba(180,140,255,0.45)",margin:"4px 0 0"},
+  progressBarWrap:{width:"100%",height:6,background:"rgba(120,60,255,0.15)",borderRadius:10,overflow:"hidden"},
+  progressBar:{height:"100%",background:"linear-gradient(90deg,#6020cc,#ffd700)",borderRadius:10,transition:"width 0.4s ease",minWidth:4},
+  afLogItem:{display:"flex",flexDirection:"column",gap:4,padding:"10px 0",borderBottom:"1px solid rgba(180,100,255,0.08)"},
+  afLogBadge:{fontSize:8,letterSpacing:"0.15em",color:"rgba(255,200,0,0.5)",fontWeight:700,margin:0,textTransform:"uppercase"},
+  afLogText:{fontSize:11,color:"rgba(200,170,255,0.7)",margin:0,lineHeight:1.6,fontStyle:"italic"},
+  afLogDate:{fontSize:9,color:"rgba(180,140,255,0.35)",margin:0},
+  alarmDismiss:{fontSize:10,color:"rgba(255,255,255,0.3)",margin:"12px 0 0",letterSpacing:"0.12em",textTransform:"uppercase"},
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(ManiFestinger));
+  </script>
+</body>
+</html>
