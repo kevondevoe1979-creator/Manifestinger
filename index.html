@@ -60,7 +60,7 @@ const GRABOVOI_CODES = {
 
 const PRESET_SOUNDS = [
   { id:"rain",  label:"Gentle Rain",    emoji:"🌧️" },
-  { id:"waves", label:"Ocean Waves",    emoji:"🌊" },
+  { id:"cash", label:"Cash Register", emoji:"💰" },
   { id:"fire",  label:"Crackling Fire", emoji:"🔥" },
   { id:"birds", label:"Morning Birds",  emoji:"🐦" },
   { id:"bowl",  label:"Singing Bowl",   emoji:"🔔" },
@@ -97,9 +97,17 @@ function playPreset(id, dur=8) {
     filt.type=id==="fire"?"lowpass":"bandpass";
     filt.frequency.value=id==="wind"?600:id==="rain"?800:300;
     src.buffer=buf; src.connect(filt); filt.connect(master); src.start();
-  } else if (id==="waves") {
-    const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=80;
-    o.connect(master); o.start(); o.stop(ctx.currentTime+dur);
+   } else if (id==="cash") {
+  const notes=[1046,1318,1568,2093];
+  notes.forEach((f,i)=>{
+    setTimeout(()=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type="square"; o.frequency.value=f;
+      g.gain.setValueAtTime(0.2,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.3);
+    }, i*90);
+  });
   } else if (id==="birds") {
     for(let i=0;i<8;i++) setTimeout(()=>{
       const o=ctx.createOscillator(), g=ctx.createGain();
