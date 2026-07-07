@@ -60,7 +60,9 @@ const GRABOVOI_CODES = {
 
 const PRESET_SOUNDS = [
   { id:"rain",  label:"Gentle Rain",    emoji:"🌧️" },
-  { id:"cash", label:"Cash Register", emoji:"💰" },
+  { id:"cash", label:"Cash Register", emoji:"💰" },{ id:"coins", label:"Coins Falling", emoji:"🪙" },
+{ id:"counter", label:"Money Counter", emoji:"💵" },
+{ id:"trumpet", label:"Trumpet Fanfare", emoji:"🎺" },
   { id:"fire",  label:"Crackling Fire", emoji:"🔥" },
   { id:"birds", label:"Morning Birds",  emoji:"🐦" },
   { id:"bowl",  label:"Singing Bowl",   emoji:"🔔" },
@@ -80,6 +82,7 @@ function playPreset(id, dur=8) {
   master.gain.setValueAtTime(0.0001, ctx.currentTime);
   master.gain.linearRampToValueAtTime(0.4, ctx.currentTime+0.3);
   master.connect(ctx.destination);
+
   if (id==="bowl") {
     [220,440,660].forEach((f,i)=>{
       const o=ctx.createOscillator(), g=ctx.createGain();
@@ -88,26 +91,92 @@ function playPreset(id, dur=8) {
       g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
       o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+dur);
     });
-  } else if (["rain","wind","fire"].includes(id)) {
+  } else if (id==="rain") {
     const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
     const d=buf.getChannelData(0);
-    for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*(id==="fire"?1:0.2);
+    for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*0.5;
     const src=ctx.createBufferSource();
     const filt=ctx.createBiquadFilter();
-    filt.type=id==="fire"?"lowpass":"bandpass";
-    filt.frequency.value=id==="wind"?600:id==="rain"?800:300;
+    filt.type="highpass"; filt.frequency.value=2000;
     src.buffer=buf; src.connect(filt); filt.connect(master); src.start();
-   } else if (id==="cash") {
-  const notes=[1046,1318,1568,2093];
-  notes.forEach((f,i)=>{
-    setTimeout(()=>{
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.type="square"; o.frequency.value=f;
-      g.gain.setValueAtTime(0.2,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
-      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.3);
-    }, i*90);
-  });
+    for(let i=0;i<dur*6;i++){
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sine"; o.frequency.value=1800+Math.random()*1200;
+        g.gain.setValueAtTime(0.08,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.15);
+      }, Math.random()*dur*1000);
+    }
+  } else if (id==="wind") {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1);
+    const src=ctx.createBufferSource();
+    const filt=ctx.createBiquadFilter();
+    filt.type="bandpass"; filt.frequency.value=400; filt.Q.value=0.7;
+    src.buffer=buf; src.connect(filt); filt.connect(master); src.start();
+  } else if (id==="fire") {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1);
+    const src=ctx.createBufferSource();
+    const filt=ctx.createBiquadFilter();
+    filt.type="lowpass"; filt.frequency.value=500;
+    src.buffer=buf; src.connect(filt); filt.connect(master); src.start();
+    for(let i=0;i<dur*4;i++){
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="square"; o.frequency.value=100+Math.random()*300;
+        g.gain.setValueAtTime(0.15,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.05);
+      }, Math.random()*dur*1000);
+    }
+  } else if (id==="cash") {
+    const notes=[1046,1318,1568,2093];
+    notes.forEach((f,i)=>{
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="square"; o.frequency.value=f;
+        g.gain.setValueAtTime(0.2,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.3);
+      }, i*90);
+    });
+  } else if (id==="coins") {
+    for(let i=0;i<14;i++){
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="triangle"; o.frequency.value=1800+Math.random()*1400;
+        g.gain.setValueAtTime(0.15,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.2);
+      }, i*120+Math.random()*80);
+    }
+  } else if (id==="counter") {
+    const clicks=Math.floor(dur*10);
+    for(let i=0;i<clicks;i++){
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="square"; o.frequency.value=2000;
+        g.gain.setValueAtTime(0.1,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.03);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.03);
+      }, i*100);
+    }
+  } else if (id==="trumpet") {
+    const notes=[523,659,784,1046];
+    notes.forEach((f,i)=>{
+      setTimeout(()=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sawtooth"; o.frequency.value=f;
+        g.gain.setValueAtTime(0.0001,ctx.currentTime);
+        g.gain.linearRampToValueAtTime(0.25,ctx.currentTime+0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+        o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.5);
+      }, i*220);
+    });
   } else if (id==="birds") {
     for(let i=0;i<8;i++) setTimeout(()=>{
       const o=ctx.createOscillator(), g=ctx.createGain();
