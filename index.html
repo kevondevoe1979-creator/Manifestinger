@@ -478,6 +478,8 @@ export default function ManiFestinger() {
           <div key={s.id} style={{...S.star,left:`${s.x}%`,top:`${s.y}%`,
             width:s.size,height:s.size,animationDelay:`${s.delay}s`,animationDuration:`${s.dur}s`}}/>
         ))}
+        <div style={{...S.shootStar,top:"12%",right:"-10%",animation:"shootingStar 7s linear infinite"}}/>
+<div style={{...S.shootStar,top:"30%",right:"-15%",animation:"shootingStar 11s linear 4s infinite"}}/>
       </div>
       <div style={S.nebula}>
         {[["15%","20%","#7b2fff",340],["80%","70%","#1a6bff",280],["60%","10%","#c020b0",200],["20%","80%","#0d4bcc",260]]
@@ -1078,7 +1080,8 @@ export default function ManiFestinger() {
         @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Raleway:ital,wght@0,300;0,400;0,600;1,300&display=swap');
         @keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
         @keyframes taglineGlow{0%,100%{text-shadow:0 0 8px rgba(212,160,255,0.9),0 0 16px rgba(212,160,255,0.5)}50%{text-shadow:0 0 16px rgba(212,160,255,1),0 0 28px rgba(212,160,255,0.8)}}
-        @keyframes float{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
+        @@keyframes shootingStar{0%{transform:rotate(-45deg) translateX(0);opacity:0}5%{opacity:1}60%{opacity:1}100%{transform:rotate(-45deg) translateX(-120vw);opacity:0}} 
+        float{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes logoSpin{to{transform:rotate(360deg)}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -1093,6 +1096,7 @@ export default function ManiFestinger() {
 const S = {
   root:{minHeight:"100vh",background:"#02000f",position:"relative",overflow:"hidden",fontFamily:"'Raleway',sans-serif"},
   starfield:{position:"fixed",inset:0,pointerEvents:"none",zIndex:0},
+  shootStar:{position:"fixed",width:130,height:2,background:"linear-gradient(90deg,rgba(255,255,255,0),#fff)",borderRadius:2,pointerEvents:"none",zIndex:0},
   star:{position:"absolute",borderRadius:"50%",background:"#fff",animation:"twinkle ease-in-out infinite"},
   nebula:{position:"fixed",inset:0,pointerEvents:"none",zIndex:0},
   orb:{position:"absolute",borderRadius:"50%",filter:"blur(80px)",opacity:.18,transform:"translate(-50%,-50%)",animation:"float 8s ease-in-out infinite"},
@@ -1100,16 +1104,16 @@ const S = {
   sidebar:{width:120,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 8px",gap:16,borderRight:"1px solid rgba(180,100,255,0.12)",background:"rgba(5,0,20,0.55)",backdropFilter:"blur(12px)",position:"sticky",top:0,height:"100vh",overflowY:"auto"},
   logoWrap:{display:"flex",flexDirection:"column",alignItems:"center",gap:6,textAlign:"center"},
   logoRing:{width:44,height:44,borderRadius:"50%",border:"1.5px solid rgba(180,100,255,0.6)",display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(120,40,255,0.15)",boxShadow:"0 0 24px rgba(150,60,255,0.4)",animation:"logoSpin 20s linear infinite"},
-  logoIcon:{fontSize:20,color:"#d4a0ff"},
-  title:{fontFamily:"'Cinzel Decorative',serif",fontSize:12,fontWeight:700,margin:0,background:"linear-gradient(135deg,#ffe066,#ffd700,#ffaa00,#ffe566)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 10px rgba(255,200,0,0.6))",lineHeight:1.3,textAlign:"center"},
-  tagline:{fontSize:8,color:"#e8d5ff",fontStyle:"italic",margin:0,textShadow:"0 0 8px rgba(212,160,255,0.9), 0 0 16px rgba(212,160,255,0.5)",animation:"taglineGlow 3s ease-in-out infinite"},
+  logoIcon:{fontSize:26,color:"#d4a0ff"},
+  title:{fontFamily:"'Cinzel Decorative',serif",fontSize:18,fontWeight:700,margin:0,background:"linear-gradient(135deg,#ffe066,#ffd700,#ffaa00,#ffe566)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 10px rgba(255,200,0,0.6))",lineHeight:1.3,textAlign:"center"},
+  tagline:{fontSize:11,color:"#e8d5ff",fontStyle:"italic",margin:0,textShadow:"0 0 8px rgba(212,160,255,0.9), 0 0 16px rgba(212,160,255,0.5)",animation:"taglineGlow 3s ease-in-out infinite"},
   nav:{display:"flex",flexDirection:"column",gap:4,width:"100%"},
   navBtn:{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"9px 4px",background:"transparent",border:"1px solid transparent",color:"rgba(200,170,255,0.45)",cursor:"pointer",borderRadius:10,transition:"all 0.2s"},
   navBtnActive:{background:"rgba(120,60,255,0.28)",border:"1px solid rgba(180,100,255,0.35)",color:"#e0c0ff",boxShadow:"0 0 14px rgba(140,60,255,0.2)"},
-  navIcon:{fontSize:16,fontFamily:"'Playfair Display',serif",fontWeight:700,lineHeight:1,letterSpacing:"0.05em"},
-  navLabel:{fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",fontWeight:700,color:"#ffd700"},
+  navIcon:{fontSize:20,fontFamily:"'Playfair Display',serif",fontWeight:700,lineHeight:1,letterSpacing:"0.05em"},
+  navLabel:{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",fontWeight:700,color:"#ffd700"},
   sideControls:{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"},
-  sideLabel:{fontSize:8,letterSpacing:"0.2em",color:"#ffd700",fontWeight:700,margin:0,textAlign:"center",filter:"drop-shadow(0 0 4px rgba(255,200,0,0.4))"},
+  sideLabel:{fontSize:11,letterSpacing:"0.2em",color:"#ffd700",fontWeight:700,margin:0,textAlign:"center",filter:"drop-shadow(0 0 4px rgba(255,200,0,0.4))"},
   sideSelect:{width:"100%",padding:"8px 10px",background:"rgba(120,60,255,0.1)",border:"1px solid rgba(180,100,255,0.22)",borderRadius:9,color:"#d0b0ff",fontSize:10,fontFamily:"'Raleway',sans-serif",cursor:"pointer",display:"flex",alignItems:"center",gap:4,outline:"none",transition:"all 0.2s"},
   sideSelectOpen:{borderColor:"rgba(180,100,255,0.6)",background:"rgba(120,60,255,0.2)"},
   sideDrop:{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#0d0820",border:"1px solid rgba(180,100,255,0.3)",borderRadius:9,overflow:"hidden",zIndex:200,boxShadow:"0 12px 40px rgba(0,0,0,0.9)"},
